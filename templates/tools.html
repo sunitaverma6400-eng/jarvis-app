@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>JARVIS — Tools</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --line: #1e1e2e;
+    --accent: #63b3ed;
+    --accent2: #68d391;
+    --warn: #fc8181;
+    --text: #e2e8f0;
+    --sub: #4a5568;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Pro Display', -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .tools-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .tools-header a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .tools-title { font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+  .tools-sub { font-size: 11px; color: var(--sub); }
+
+  .tools-body { padding: 12px 12px 80px; }
+
+  /* Tool Category */
+  .tool-category { margin-bottom: 8px; }
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .category-header .arrow { margin-left: auto; transition: transform 0.2s; }
+  .category-header.open .arrow { transform: rotate(90deg); }
+  .category-body { display: none; padding-top: 6px; }
+  .category-body.open { display: block; }
+
+  /* Tool Card */
+  .tool-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .tool-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+  }
+  .tool-icon { font-size: 20px; }
+  .tool-info { flex: 1; }
+  .tool-name { font-size: 14px; font-weight: 600; }
+  .tool-desc { font-size: 11px; color: var(--sub); margin-top: 2px; }
+  .tool-expand { color: var(--sub); font-size: 18px; transition: transform 0.2s; }
+  .tool-card.open .tool-expand { transform: rotate(90deg); }
+
+  .tool-body { display: none; padding: 0 14px 14px; }
+  .tool-card.open .tool-body { display: block; }
+
+  .tool-field { margin-bottom: 10px; }
+  .tool-field label { display: block; font-size: 11px; color: var(--sub); margin-bottom: 4px; }
+  .tool-field input, .tool-field select, .tool-field textarea {
+    width: 100%;
+    background: #0d0d16;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 9px 12px;
+    font-size: 13px;
+    outline: none;
+  }
+  .tool-field input:focus, .tool-field select:focus, .tool-field textarea:focus {
+    border-color: var(--accent);
+  }
+  .tool-field select option { background: #111; }
+
+  .run-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 11px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .run-btn:disabled { opacity: 0.5; }
+
+  /* Result area */
+  .tool-result {
+    margin-top: 12px;
+    background: #0d0d16;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    min-height: 40px;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .tool-result.loading { color: var(--sub); animation: pulse 1s infinite; }
+  .tool-result.error { border-color: var(--warn); color: var(--warn); }
+  .tool-result.success { border-color: var(--accent2); }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* Media grid in results */
+  .result-media-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .result-img { width: calc(50% - 3px); border-radius: 8px; display: block; }
+  .result-video { width: 100%; border-radius: 8px; margin-top: 6px; }
+
+  /* Radio result */
+  .radio-play-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(99,179,237,0.08);
+    border: 1px solid rgba(99,179,237,0.2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 6px;
+    cursor: pointer;
+  }
+  .radio-play-card:hover { background: rgba(99,179,237,0.15); }
+
+  /* Back to chat sticky bottom */
+  .back-btn {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    z-index: 200;
+    box-shadow: 0 4px 20px rgba(99,179,237,0.4);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header class="tools-header">
+  <a href="/">← Chat</a>
+  <div>
+    <div class="tools-title">🔧 TOOLS</div>
+    <div class="tools-sub">AI bypass — seedha kaam karo</div>
+  </div>
+</header>
+
+<div class="tools-body">
+
+<!-- ======== IMAGE TOOLS ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🖼️ Images &amp; Media <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_search_images">
+      <div class="tool-card-header" onclick="toggleCard('card_search_images')">
+        <span class="tool-icon">🔍</span>
+        <div class="tool-info">
+          <div class="tool-name">Image Search</div>
+          <div class="tool-desc">Selenium/Chrome + DDG + Wikimedia se real images</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Kya dhundna hai?</label>
+          <input type="text" id="img_query" placeholder="jaise: sunset mountains, cute cats...">
+        </div>
+        <div class="tool-field">
+          <label>Kitni images? (1-10)</label>
+          <input type="number" id="img_count" value="4" min="1" max="10">
+        </div>
+        <button class="run-btn" onclick="runImageSearch()">
+          🔍 Images Dhundo
+        </button>
+        <div class="tool-result" id="res_card_search_images" style="display:none"></div>
+        <div class="result-media-grid" id="media_card_search_images"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_generate_image">
+      <div class="tool-card-header" onclick="toggleCard('card_generate_image')">
+        <span class="tool-icon">🎨</span>
+        <div class="tool-info">
+          <div class="tool-name">AI Image Generate</div>
+          <div class="tool-desc">Pollinations.ai se free AI image banao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Description (English mein acha kaam karta hai)</label>
+          <textarea id="gen_prompt" rows="3" placeholder="jaise: beautiful Indian girl in traditional dress, photorealistic"></textarea>
+        </div>
+        <button class="run-btn" onclick="runTool('generate_image', {prompt: document.getElementById('gen_prompt').value}, 'card_generate_image', true)">
+          🎨 Image Banao
+        </button>
+        <div class="tool-result" id="res_card_generate_image" style="display:none"></div>
+        <div class="result-media-grid" id="media_card_generate_image"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_search_videos">
+      <div class="tool-card-header" onclick="toggleCard('card_search_videos')">
+        <span class="tool-icon">🎬</span>
+        <div class="tool-info">
+          <div class="tool-name">Video Search (YouTube)</div>
+          <div class="tool-desc">yt-dlp se YouTube videos — app mein play hongi</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Video search karo</label>
+          <input type="text" id="vid_query" placeholder="jaise: Bollywood songs 2024">
+        </div>
+        <div class="tool-field">
+          <label>Kitne videos?</label>
+          <input type="number" id="vid_count" value="3" min="1" max="5">
+        </div>
+        <button class="run-btn" onclick="runVideoSearch()">
+          ▶ Videos Dhundo
+        </button>
+        <div class="tool-result" id="res_card_search_videos" style="display:none"></div>
+        <div id="media_card_search_videos"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== WEB TOOLS ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🌐 Web &amp; News <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_web_search">
+      <div class="tool-card-header" onclick="toggleCard('card_web_search')">
+        <span class="tool-icon">🔎</span>
+        <div class="tool-info">
+          <div class="tool-name">Web Search</div>
+          <div class="tool-desc">DuckDuckGo / Tavily se internet search</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Query</label>
+          <input type="text" id="ws_q" placeholder="kuch bhi search karo...">
+        </div>
+        <button class="run-btn" onclick="runTool('web_search', {query: document.getElementById('ws_q').value}, 'card_web_search', false)">
+          🔎 Search Karo
+        </button>
+        <div class="tool-result" id="res_card_web_search" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_news">
+      <div class="tool-card-header" onclick="toggleCard('card_get_news')">
+        <span class="tool-icon">📰</span>
+        <div class="tool-info">
+          <div class="tool-name">News</div>
+          <div class="tool-desc">Kisi bhi topic par latest news</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Topic (empty = top news)</label>
+          <input type="text" id="news_topic" placeholder="jaise: India, cricket, technology...">
+        </div>
+        <button class="run-btn" onclick="runTool('get_news', {topic: document.getElementById('news_topic').value}, 'card_get_news', false)">
+          📰 News Lo
+        </button>
+        <div class="tool-result" id="res_card_get_news" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_scrape_webpage">
+      <div class="tool-card-header" onclick="toggleCard('card_scrape_webpage')">
+        <span class="tool-icon">📄</span>
+        <div class="tool-info">
+          <div class="tool-name">Webpage Scraper</div>
+          <div class="tool-desc">Kisi bhi URL ka content padho</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>URL</label>
+          <input type="url" id="scrape_url" placeholder="https://...">
+        </div>
+        <div class="tool-field">
+          <label>Extract</label>
+          <select id="scrape_type">
+            <option value="text">Text</option>
+            <option value="title">Title</option>
+            <option value="links">Links</option>
+          </select>
+        </div>
+        <button class="run-btn" onclick="runTool('scrape_webpage', {url: document.getElementById('scrape_url').value, extract: document.getElementById('scrape_type').value}, 'card_scrape_webpage', false)">
+          📄 Page Padho
+        </button>
+        <div class="tool-result" id="res_card_scrape_webpage" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== INFO TOOLS ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    ℹ️ Info Tools <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_get_weather">
+      <div class="tool-card-header" onclick="toggleCard('card_get_weather')">
+        <span class="tool-icon">🌤️</span>
+        <div class="tool-info">
+          <div class="tool-name">Weather</div>
+          <div class="tool-desc">Kisi bhi shahar ka mausam</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Shahar ka naam</label>
+          <input type="text" id="weather_city" placeholder="jaise: Delhi, Mumbai, London...">
+        </div>
+        <button class="run-btn" onclick="runTool('get_weather', {city: document.getElementById('weather_city').value}, 'card_get_weather', false)">
+          🌤️ Mausam Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_weather" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_current_time">
+      <div class="tool-card-header" onclick="toggleCard('card_get_current_time')">
+        <span class="tool-icon">⏰</span>
+        <div class="tool-info">
+          <div class="tool-name">Current Time</div>
+          <div class="tool-desc">Abhi ka time aur date</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('get_current_time', {}, 'card_get_current_time', false)">
+          ⏰ Time Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_current_time" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_ip_info">
+      <div class="tool-card-header" onclick="toggleCard('card_get_ip_info')">
+        <span class="tool-icon">🌐</span>
+        <div class="tool-info">
+          <div class="tool-name">IP Info</div>
+          <div class="tool-desc">IP address ki location aur ISP (blank = mera IP)</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>IP Address (khali = mera IP)</label>
+          <input type="text" id="ip_addr" placeholder="jaise: 8.8.8.8 ya khali chod do">
+        </div>
+        <button class="run-btn" onclick="runTool('get_ip_info', {ip: document.getElementById('ip_addr').value}, 'card_get_ip_info', false)">
+          🌐 IP Info Lo
+        </button>
+        <div class="tool-result" id="res_card_get_ip_info" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_country_info">
+      <div class="tool-card-header" onclick="toggleCard('card_get_country_info')">
+        <span class="tool-icon">🏳️</span>
+        <div class="tool-info">
+          <div class="tool-name">Country Info</div>
+          <div class="tool-desc">Desh ki poori jankari</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Desh ka naam (English mein)</label>
+          <input type="text" id="country_name" placeholder="jaise: India, Japan, Brazil...">
+        </div>
+        <button class="run-btn" onclick="runTool('get_country_info', {country: document.getElementById('country_name').value}, 'card_get_country_info', false)">
+          🏳️ Jankari Lo
+        </button>
+        <div class="tool-result" id="res_card_get_country_info" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_nasa_apod">
+      <div class="tool-card-header" onclick="toggleCard('card_get_nasa_apod')">
+        <span class="tool-icon">🌌</span>
+        <div class="tool-info">
+          <div class="tool-name">NASA Photo of Day</div>
+          <div class="tool-desc">Aaj ki NASA astronomy picture</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('get_nasa_apod', {}, 'card_get_nasa_apod', true)">
+          🌌 NASA Photo Lo
+        </button>
+        <div class="tool-result" id="res_card_get_nasa_apod" style="display:none"></div>
+        <div class="result-media-grid" id="media_card_get_nasa_apod"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_nasa_mars_photos">
+      <div class="tool-card-header" onclick="toggleCard('card_get_nasa_mars_photos')">
+        <span class="tool-icon">🚀</span>
+        <div class="tool-info">
+          <div class="tool-name">Mars Rover Photos</div>
+          <div class="tool-desc">NASA Curiosity Rover ki latest photos</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('get_nasa_mars_photos', {}, 'card_get_nasa_mars_photos', true)">
+          🚀 Mars Photos Lo
+        </button>
+        <div class="tool-result" id="res_card_get_nasa_mars_photos" style="display:none"></div>
+        <div class="result-media-grid" id="media_card_get_nasa_mars_photos"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_spacex_launches">
+      <div class="tool-card-header" onclick="toggleCard('card_get_spacex_launches')">
+        <span class="tool-icon">🛸</span>
+        <div class="tool-info">
+          <div class="tool-name">SpaceX Launches</div>
+          <div class="tool-desc">Latest ya upcoming launches</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Type</label>
+          <select id="spacex_type">
+            <option value="false">Latest (ho chuka)</option>
+            <option value="true">Upcoming (aane wala)</option>
+          </select>
+        </div>
+        <button class="run-btn" onclick="runTool('get_spacex_launches', {upcoming: document.getElementById('spacex_type').value === 'true'}, 'card_get_spacex_launches', false)">
+          🛸 SpaceX Info Lo
+        </button>
+        <div class="tool-result" id="res_card_get_spacex_launches" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== RADIO ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    📻 Radio <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+    <div class="tool-card" id="card_search_radio">
+      <div class="tool-card-header" onclick="toggleCard('card_search_radio')">
+        <span class="tool-icon">📻</span>
+        <div class="tool-info">
+          <div class="tool-name">Radio Stations</div>
+          <div class="tool-desc">Internet radio — seedha app mein bajaao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Station ya genre</label>
+          <input type="text" id="radio_q" placeholder="jaise: bollywood, jazz, rock...">
+        </div>
+        <div class="tool-field">
+          <label>Country code (khali = sab)</label>
+          <input type="text" id="radio_country" placeholder="jaise: IN, US, GB...">
+        </div>
+        <button class="run-btn" onclick="runTool('search_radio', {query: document.getElementById('radio_q').value, country: document.getElementById('radio_country').value, limit: 5}, 'card_search_radio', true)">
+          📻 Stations Dhundo
+        </button>
+        <div class="tool-result" id="res_card_search_radio" style="display:none"></div>
+        <div id="media_card_search_radio"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== PHONE TOOLS ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    📱 Phone (Termux) <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_set_alarm">
+      <div class="tool-card-header" onclick="toggleCard('card_set_alarm')">
+        <span class="tool-icon">⏰</span>
+        <div class="tool-info">
+          <div class="tool-name">Alarm Set</div>
+          <div class="tool-desc">Phone mein alarm lagao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Ghante (0-23)</label>
+          <input type="number" id="alarm_h" value="7" min="0" max="23">
+        </div>
+        <div class="tool-field">
+          <label>Minute (0-59)</label>
+          <input type="number" id="alarm_m" value="0" min="0" max="59">
+        </div>
+        <div class="tool-field">
+          <label>Message</label>
+          <input type="text" id="alarm_msg" value="Jarvis Alarm">
+        </div>
+        <button class="run-btn" onclick="runTool('set_alarm', {hour: parseInt(document.getElementById('alarm_h').value), minute: parseInt(document.getElementById('alarm_m').value), message: document.getElementById('alarm_msg').value}, 'card_set_alarm', false)">
+          ⏰ Alarm Lagao
+        </button>
+        <div class="tool-result" id="res_card_set_alarm" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_battery_status">
+      <div class="tool-card-header" onclick="toggleCard('card_get_battery_status')">
+        <span class="tool-icon">🔋</span>
+        <div class="tool-info">
+          <div class="tool-name">Battery Status</div>
+          <div class="tool-desc">Phone battery kitni hai</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('get_battery_status', {}, 'card_get_battery_status', false)">
+          🔋 Battery Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_battery_status" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_toggle_torch">
+      <div class="tool-card-header" onclick="toggleCard('card_toggle_torch')">
+        <span class="tool-icon">🔦</span>
+        <div class="tool-info">
+          <div class="tool-name">Torch</div>
+          <div class="tool-desc">Flashlight on/off karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" style="background:#68d391" onclick="runTool('toggle_torch', {on: true}, 'card_toggle_torch', false)">🔦 ON</button>
+        <button class="run-btn" style="background:#fc8181;margin-top:8px" onclick="runTool('toggle_torch', {on: false}, 'card_toggle_torch', false)">🔦 OFF</button>
+        <div class="tool-result" id="res_card_toggle_torch" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_send_notification">
+      <div class="tool-card-header" onclick="toggleCard('card_send_notification')">
+        <span class="tool-icon">🔔</span>
+        <div class="tool-info">
+          <div class="tool-name">Notification</div>
+          <div class="tool-desc">Phone par notification bhejo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Title</label>
+          <input type="text" id="notif_title" placeholder="Notification title">
+        </div>
+        <div class="tool-field">
+          <label>Content</label>
+          <input type="text" id="notif_content" placeholder="Notification content">
+        </div>
+        <button class="run-btn" onclick="runTool('send_notification', {title: document.getElementById('notif_title').value, content: document.getElementById('notif_content').value}, 'card_send_notification', false)">
+          🔔 Bhejo
+        </button>
+        <div class="tool-result" id="res_card_send_notification" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== MEMORY ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🧠 Memory <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_list_memories">
+      <div class="tool-card-header" onclick="toggleCard('card_list_memories')">
+        <span class="tool-icon">📋</span>
+        <div class="tool-info">
+          <div class="tool-name">Saari Yaadein</div>
+          <div class="tool-desc">Jarvis ne kya kya yaad rakha hai</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('list_memories', {}, 'card_list_memories', false)">
+          🧠 Yaadein Dekho
+        </button>
+        <div class="tool-result" id="res_card_list_memories" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_remember">
+      <div class="tool-card-header" onclick="toggleCard('card_remember')">
+        <span class="tool-icon">💾</span>
+        <div class="tool-info">
+          <div class="tool-name">Yaad Rakho</div>
+          <div class="tool-desc">Koi baat TinyDB mein save karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Key (naam)</label>
+          <input type="text" id="mem_key" placeholder="jaise: mera_naam">
+        </div>
+        <div class="tool-field">
+          <label>Value (value)</label>
+          <input type="text" id="mem_val" placeholder="jaise: Rahul">
+        </div>
+        <button class="run-btn" onclick="runTool('remember', {key: document.getElementById('mem_key').value, value: document.getElementById('mem_val').value}, 'card_remember', false)">
+          💾 Yaad Rakho
+        </button>
+        <div class="tool-result" id="res_card_remember" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_recall">
+      <div class="tool-card-header" onclick="toggleCard('card_recall')">
+        <span class="tool-icon">🔍</span>
+        <div class="tool-info">
+          <div class="tool-name">Yaad Karo</div>
+          <div class="tool-desc">Saved memory recall karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Key (naam)</label>
+          <input type="text" id="recall_key" placeholder="jaise: mera_naam">
+        </div>
+        <button class="run-btn" onclick="runTool('recall', {key: document.getElementById('recall_key').value}, 'card_recall', false)">
+          🔍 Yaad Karo
+        </button>
+        <div class="tool-result" id="res_card_recall" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_list_api_keys">
+      <div class="tool-card-header" onclick="toggleCard('card_list_api_keys')">
+        <span class="tool-icon">🔑</span>
+        <div class="tool-info">
+          <div class="tool-name">API Keys List</div>
+          <div class="tool-desc">Konsi keys save hain</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('list_api_keys', {}, 'card_list_api_keys', false)">
+          🔑 Keys Dekho
+        </button>
+        <div class="tool-result" id="res_card_list_api_keys" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- ═══ PHASE 1 — ADVANCED TOOLS (v6) ═══ -->
+
+    <div class="tool-card" id="card_calculate">
+      <div class="tool-card-header" onclick="toggleCard('card_calculate')">
+        <span class="tool-icon">🧮</span>
+        <div class="tool-info">
+          <div class="tool-name">Calculator</div>
+          <div class="tool-desc">Koi bhi math expression solve karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Expression</label>
+          <input type="text" id="calc_expr" placeholder="jaise: (12+8)*3/2">
+        </div>
+        <button class="run-btn" onclick="runTool('calculate', {expression: document.getElementById('calc_expr').value}, 'card_calculate', false)">
+          🧮 Calculate Karo
+        </button>
+        <div class="tool-result" id="res_card_calculate" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_convert_units">
+      <div class="tool-card-header" onclick="toggleCard('card_convert_units')">
+        <span class="tool-icon">📏</span>
+        <div class="tool-info">
+          <div class="tool-name">Unit Converter</div>
+          <div class="tool-desc">Length/weight/volume/speed/temp convert karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Value</label>
+          <input type="text" id="cu_value" placeholder="jaise: 100">
+        </div>
+        <div class="tool-field">
+          <label>From Unit</label>
+          <input type="text" id="cu_from" placeholder="jaise: km, kg, c, mph">
+        </div>
+        <div class="tool-field">
+          <label>To Unit</label>
+          <input type="text" id="cu_to" placeholder="jaise: mile, lb, f, kmh">
+        </div>
+        <button class="run-btn" onclick="runTool('convert_units', {value: parseFloat(document.getElementById('cu_value').value), from_unit: document.getElementById('cu_from').value, to_unit: document.getElementById('cu_to').value}, 'card_convert_units', false)">
+          📏 Convert Karo
+        </button>
+        <div class="tool-result" id="res_card_convert_units" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_convert_currency">
+      <div class="tool-card-header" onclick="toggleCard('card_convert_currency')">
+        <span class="tool-icon">💱</span>
+        <div class="tool-info">
+          <div class="tool-name">Currency Converter</div>
+          <div class="tool-desc">Live exchange rate se convert karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Amount</label>
+          <input type="text" id="cc_amount" placeholder="jaise: 100">
+        </div>
+        <div class="tool-field">
+          <label>From (ISO code)</label>
+          <input type="text" id="cc_from" placeholder="jaise: USD">
+        </div>
+        <div class="tool-field">
+          <label>To (ISO code)</label>
+          <input type="text" id="cc_to" placeholder="jaise: INR">
+        </div>
+        <button class="run-btn" onclick="runTool('convert_currency', {amount: parseFloat(document.getElementById('cc_amount').value), from_currency: document.getElementById('cc_from').value, to_currency: document.getElementById('cc_to').value}, 'card_convert_currency', false)">
+          💱 Convert Karo
+        </button>
+        <div class="tool-result" id="res_card_convert_currency" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_translate_text">
+      <div class="tool-card-header" onclick="toggleCard('card_translate_text')">
+        <span class="tool-icon">🌐</span>
+        <div class="tool-info">
+          <div class="tool-name">Translator</div>
+          <div class="tool-desc">Kisi bhi language mein translate karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Text</label>
+          <input type="text" id="tr_text" placeholder="jaise: How are you?">
+        </div>
+        <div class="tool-field">
+          <label>Target Language (ISO code)</label>
+          <input type="text" id="tr_lang" placeholder="jaise: hi, fr, es" value="hi">
+        </div>
+        <button class="run-btn" onclick="runTool('translate_text', {text: document.getElementById('tr_text').value, target_lang: document.getElementById('tr_lang').value}, 'card_translate_text', false)">
+          🌐 Translate Karo
+        </button>
+        <div class="tool-result" id="res_card_translate_text" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_dictionary">
+      <div class="tool-card-header" onclick="toggleCard('card_get_dictionary')">
+        <span class="tool-icon">📖</span>
+        <div class="tool-info">
+          <div class="tool-name">Dictionary</div>
+          <div class="tool-desc">Word ka meaning aur synonyms</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Word</label>
+          <input type="text" id="dict_word" placeholder="jaise: happy">
+        </div>
+        <button class="run-btn" onclick="runTool('get_dictionary', {word: document.getElementById('dict_word').value}, 'card_get_dictionary', false)">
+          📖 Meaning Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_dictionary" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_wikipedia_summary">
+      <div class="tool-card-header" onclick="toggleCard('card_get_wikipedia_summary')">
+        <span class="tool-icon">📚</span>
+        <div class="tool-info">
+          <div class="tool-name">Wikipedia Summary</div>
+          <div class="tool-desc">Kisi bhi topic ki summary</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Topic</label>
+          <input type="text" id="wiki_q" placeholder="jaise: Albert Einstein">
+        </div>
+        <button class="run-btn" onclick="runTool('get_wikipedia_summary', {query: document.getElementById('wiki_q').value}, 'card_get_wikipedia_summary', false)">
+          📚 Summary Lao
+        </button>
+        <div class="tool-result" id="res_card_get_wikipedia_summary" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_crypto_price">
+      <div class="tool-card-header" onclick="toggleCard('card_get_crypto_price')">
+        <span class="tool-icon">₿</span>
+        <div class="tool-info">
+          <div class="tool-name">Crypto Price</div>
+          <div class="tool-desc">Live cryptocurrency price</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Coin</label>
+          <input type="text" id="crypto_coin" placeholder="jaise: bitcoin, ethereum" value="bitcoin">
+        </div>
+        <button class="run-btn" onclick="runTool('get_crypto_price', {coin: document.getElementById('crypto_coin').value}, 'card_get_crypto_price', false)">
+          ₿ Price Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_crypto_price" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_generate_qr">
+      <div class="tool-card-header" onclick="toggleCard('card_generate_qr')">
+        <span class="tool-icon">🔲</span>
+        <div class="tool-info">
+          <div class="tool-name">QR Code Generator</div>
+          <div class="tool-desc">Kisi text/URL ka QR code banao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Text / URL</label>
+          <input type="text" id="qr_text" placeholder="jaise: https://example.com">
+        </div>
+        <button class="run-btn" onclick="runTool('generate_qr', {text: document.getElementById('qr_text').value}, 'card_generate_qr', true)">
+          🔲 QR Banao
+        </button>
+        <div class="tool-result" id="res_card_generate_qr" style="display:none"></div>
+        <div class="result-media-grid" id="media_card_generate_qr"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_random_quote">
+      <div class="tool-card-header" onclick="toggleCard('card_get_random_quote')">
+        <span class="tool-icon">💬</span>
+        <div class="tool-info">
+          <div class="tool-name">Motivational Quote</div>
+          <div class="tool-desc">Ek inspiring quote paao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('get_random_quote', {}, 'card_get_random_quote', false)">
+          💬 Quote Do
+        </button>
+        <div class="tool-result" id="res_card_get_random_quote" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_generate_password">
+      <div class="tool-card-header" onclick="toggleCard('card_generate_password')">
+        <span class="tool-icon">🔐</span>
+        <div class="tool-info">
+          <div class="tool-name">Password Generator</div>
+          <div class="tool-desc">Strong secure password banao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Length</label>
+          <input type="text" id="pwd_len" placeholder="16" value="16">
+        </div>
+        <button class="run-btn" onclick="runTool('generate_password', {length: parseInt(document.getElementById('pwd_len').value)||16, use_symbols: true}, 'card_generate_password', false)">
+          🔐 Password Banao
+        </button>
+        <div class="tool-result" id="res_card_generate_password" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_text_analyzer">
+      <div class="tool-card-header" onclick="toggleCard('card_text_analyzer')">
+        <span class="tool-icon">📝</span>
+        <div class="tool-info">
+          <div class="tool-name">Text Analyzer</div>
+          <div class="tool-desc">Word/char/sentence count, reading time</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Text</label>
+          <input type="text" id="ta_text" placeholder="Apna text yahan paste karo">
+        </div>
+        <button class="run-btn" onclick="runTool('text_analyzer', {text: document.getElementById('ta_text').value}, 'card_text_analyzer', false)">
+          📝 Analyze Karo
+        </button>
+        <div class="tool-result" id="res_card_text_analyzer" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_add_todo">
+      <div class="tool-card-header" onclick="toggleCard('card_add_todo')">
+        <span class="tool-icon">✅</span>
+        <div class="tool-info">
+          <div class="tool-name">Todo List</div>
+          <div class="tool-desc">Tasks add/list/complete/delete karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Naya Task</label>
+          <input type="text" id="todo_task" placeholder="jaise: Milk khareedo">
+        </div>
+        <button class="run-btn" onclick="runTool('add_todo', {task: document.getElementById('todo_task').value, priority: 'medium'}, 'card_add_todo', false)">
+          ➕ Task Add Karo
+        </button>
+        <button class="run-btn" style="margin-top:8px" onclick="runTool('list_todos', {}, 'card_add_todo', false)">
+          📋 Saare Todos Dekho
+        </button>
+        <div class="tool-result" id="res_card_add_todo" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_system_info">
+      <div class="tool-card-header" onclick="toggleCard('card_system_info')">
+        <span class="tool-icon">🖥️</span>
+        <div class="tool-info">
+          <div class="tool-name">System Info</div>
+          <div class="tool-desc">Storage, battery, Python version</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('system_info', {}, 'card_system_info', false)">
+          🖥️ Info Dekho
+        </button>
+        <div class="tool-result" id="res_card_system_info" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_morning_briefing">
+      <div class="tool-card-header" onclick="toggleCard('card_morning_briefing')">
+        <span class="tool-icon">☀️</span>
+        <div class="tool-info">
+          <div class="tool-name">Morning Briefing</div>
+          <div class="tool-desc">Time + Weather + News + Quote — ek saath</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Shahar</label>
+          <input type="text" id="mb_city" placeholder="jaise: Delhi" value="Delhi">
+        </div>
+        <button class="run-btn" onclick="runTool('morning_briefing', {city: document.getElementById('mb_city').value}, 'card_morning_briefing', false)">
+          ☀️ Briefing Do
+        </button>
+        <div class="tool-result" id="res_card_morning_briefing" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== PHONE EXTRAS (TERMUX) ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    📱 Phone Extras (Termux) <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_make_call">
+      <div class="tool-card-header" onclick="toggleCard('card_make_call')">
+        <span class="tool-icon">📞</span>
+        <div class="tool-info">
+          <div class="tool-name">Call Karo</div>
+          <div class="tool-desc">Kisi number par call lagao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Phone Number</label>
+          <input type="tel" id="call_num" placeholder="jaise: +919876543210">
+        </div>
+        <button class="run-btn" onclick="runTool('make_call', {phone_number: document.getElementById('call_num').value}, 'card_make_call', false)">
+          📞 Call Karo
+        </button>
+        <div class="tool-result" id="res_card_make_call" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_send_sms">
+      <div class="tool-card-header" onclick="toggleCard('card_send_sms')">
+        <span class="tool-icon">💬</span>
+        <div class="tool-info">
+          <div class="tool-name">SMS Bhejo</div>
+          <div class="tool-desc">Kisi number par SMS bhejo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Phone Number</label>
+          <input type="tel" id="sms_num" placeholder="jaise: +919876543210">
+        </div>
+        <div class="tool-field">
+          <label>Message</label>
+          <input type="text" id="sms_msg" placeholder="Message likho">
+        </div>
+        <button class="run-btn" onclick="runTool('send_sms', {phone_number: document.getElementById('sms_num').value, message: document.getElementById('sms_msg').value}, 'card_send_sms', false)">
+          💬 SMS Bhejo
+        </button>
+        <div class="tool-result" id="res_card_send_sms" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_open_app">
+      <div class="tool-card-header" onclick="toggleCard('card_open_app')">
+        <span class="tool-icon">📲</span>
+        <div class="tool-info">
+          <div class="tool-name">App Kholo</div>
+          <div class="tool-desc">Android app kholo package name se</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Package Name</label>
+          <input type="text" id="app_pkg" placeholder="jaise: com.whatsapp">
+        </div>
+        <button class="run-btn" onclick="runTool('open_app', {package_name: document.getElementById('app_pkg').value}, 'card_open_app', false)">
+          📲 App Kholo
+        </button>
+        <div class="tool-result" id="res_card_open_app" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_vibrate">
+      <div class="tool-card-header" onclick="toggleCard('card_vibrate')">
+        <span class="tool-icon">📳</span>
+        <div class="tool-info">
+          <div class="tool-name">Vibrate Karo</div>
+          <div class="tool-desc">Phone ko vibrate karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Duration (ms)</label>
+          <input type="number" id="vib_ms" placeholder="" value="500">
+        </div>
+        <button class="run-btn" onclick="runTool('vibrate', {duration_ms: (parseInt(document.getElementById('vib_ms').value)||500)}, 'card_vibrate', false)">
+          📳 Vibrate
+        </button>
+        <div class="tool-result" id="res_card_vibrate" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_location">
+      <div class="tool-card-header" onclick="toggleCard('card_get_location')">
+        <span class="tool-icon">📍</span>
+        <div class="tool-info">
+          <div class="tool-name">GPS Location</div>
+          <div class="tool-desc">Abhi ki GPS location lo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('get_location', {}, 'card_get_location', false)">
+          📍 Location Lo
+        </button>
+        <div class="tool-result" id="res_card_get_location" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== PLAY & FETCH MEDIA ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🎬 Play & Fetch Media <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_find_and_play">
+      <div class="tool-card-header" onclick="toggleCard('card_find_and_play')">
+        <span class="tool-icon">▶️</span>
+        <div class="tool-info">
+          <div class="tool-name">Dhoondo aur Chalao</div>
+          <div class="tool-desc">Naam/topic bolo, video/gaana khud dhoond ke play karega</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Naam/Topic</label>
+          <input type="text" id="fap_q" placeholder="jaise: Tum Hi Ho song">
+        </div>
+        <div class="tool-field">
+          <label>Source</label>
+          <select id="fap_src">
+            <option value="auto" selected>auto</option>
+            <option value="youtube">youtube</option>
+            <option value="web">web</option>
+          </select>
+        </div>
+        <button class="run-btn" onclick="runTool('find_and_play', {query: document.getElementById('fap_q').value, source: document.getElementById('fap_src').value}, 'card_find_and_play', false)">
+          ▶️ Dhoondo aur Chalao
+        </button>
+        <div class="tool-result" id="res_card_find_and_play" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_search_youtube">
+      <div class="tool-card-header" onclick="toggleCard('card_search_youtube')">
+        <span class="tool-icon">📺</span>
+        <div class="tool-info">
+          <div class="tool-name">YouTube Search</div>
+          <div class="tool-desc">YouTube par specifically videos dhundo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Query</label>
+          <input type="text" id="yt_q" placeholder="jaise: lofi music mix">
+        </div>
+        <div class="tool-field">
+          <label>Count</label>
+          <input type="number" id="yt_count" placeholder="" value="3">
+        </div>
+        <button class="run-btn" onclick="runTool('search_youtube', {query: document.getElementById('yt_q').value, count: (parseInt(document.getElementById('yt_count').value)||3)}, 'card_search_youtube', true)">
+          📺 YouTube Dhundo
+        </button>
+        <div class="tool-result" id="res_card_search_youtube" style="display:none"></div>
+        <div class="result-media-grid" id="media_card_search_youtube"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_page_media">
+      <div class="tool-card-header" onclick="toggleCard('card_get_page_media')">
+        <span class="tool-icon">🖇️</span>
+        <div class="tool-info">
+          <div class="tool-name">Page Se Media Nikalo</div>
+          <div class="tool-desc">Kisi webpage se saari images/videos nikalo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Page URL</label>
+          <input type="url" id="gpm_url" placeholder="https://...">
+        </div>
+        <div class="tool-field">
+          <label>Media Type</label>
+          <select id="gpm_type">
+            <option value="all" selected>all</option>
+            <option value="image">image</option>
+            <option value="video">video</option>
+          </select>
+        </div>
+        <div class="tool-field">
+          <label>Limit</label>
+          <input type="number" id="gpm_limit" placeholder="" value="10">
+        </div>
+        <button class="run-btn" onclick="runTool('get_page_media', {url: document.getElementById('gpm_url').value, media_type: document.getElementById('gpm_type').value, limit: (parseInt(document.getElementById('gpm_limit').value)||10)}, 'card_get_page_media', true)">
+          🖇️ Media Nikalo
+        </button>
+        <div class="tool-result" id="res_card_get_page_media" style="display:none"></div>
+        <div class="result-media-grid" id="media_card_get_page_media"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== PLACES & TIME ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🌍 Places & Time <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_get_sunrise_sunset">
+      <div class="tool-card-header" onclick="toggleCard('card_get_sunrise_sunset')">
+        <span class="tool-icon">🌅</span>
+        <div class="tool-info">
+          <div class="tool-name">Sunrise/Sunset</div>
+          <div class="tool-desc">Kisi shahar ka aaj ka sunrise/sunset time</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Shahar</label>
+          <input type="text" id="ss_city" placeholder="jaise: Mumbai">
+        </div>
+        <button class="run-btn" onclick="runTool('get_sunrise_sunset', {city: document.getElementById('ss_city').value}, 'card_get_sunrise_sunset', false)">
+          🌅 Time Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_sunrise_sunset" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_public_holidays">
+      <div class="tool-card-header" onclick="toggleCard('card_get_public_holidays')">
+        <span class="tool-icon">🎉</span>
+        <div class="tool-info">
+          <div class="tool-name">Public Holidays</div>
+          <div class="tool-desc">Kisi desh ki public holidays</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Country Code</label>
+          <input type="text" id="ph_cc" placeholder="jaise: IN, US, GB">
+        </div>
+        <div class="tool-field">
+          <label>Year</label>
+          <input type="number" id="ph_yr" placeholder="" value="2026">
+        </div>
+        <button class="run-btn" onclick="runTool('get_public_holidays', {country_code: document.getElementById('ph_cc').value, year: (parseInt(document.getElementById('ph_yr').value)||2026)}, 'card_get_public_holidays', false)">
+          🎉 Holidays Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_public_holidays" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_search_place_osm">
+      <div class="tool-card-header" onclick="toggleCard('card_search_place_osm')">
+        <span class="tool-icon">🗺️</span>
+        <div class="tool-info">
+          <div class="tool-name">Place Dhundo (Map)</div>
+          <div class="tool-desc">OpenStreetMap se koi jagah dhundo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Jagah</label>
+          <input type="text" id="osm_place" placeholder="jaise: India Gate Delhi">
+        </div>
+        <button class="run-btn" onclick="runTool('search_place_osm', {place: document.getElementById('osm_place').value}, 'card_search_place_osm', false)">
+          🗺️ Jagah Dhundo
+        </button>
+        <div class="tool-result" id="res_card_search_place_osm" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== SAVED SITES & WATCHERS ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🔖 Saved Sites & Watchers <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_save_site">
+      <div class="tool-card-header" onclick="toggleCard('card_save_site')">
+        <span class="tool-icon">💾</span>
+        <div class="tool-info">
+          <div class="tool-name">Site Save Karo</div>
+          <div class="tool-desc">Website link ko naam ke saath yaad rakho</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Naam</label>
+          <input type="text" id="ss_name" placeholder="jaise: mera_pasandida_site">
+        </div>
+        <div class="tool-field">
+          <label>URL</label>
+          <input type="url" id="ss_url" placeholder="https://...">
+        </div>
+        <button class="run-btn" onclick="runTool('save_site', {name: document.getElementById('ss_name').value, url: document.getElementById('ss_url').value}, 'card_save_site', false)">
+          💾 Save Karo
+        </button>
+        <div class="tool-result" id="res_card_save_site" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_play_saved_site">
+      <div class="tool-card-header" onclick="toggleCard('card_play_saved_site')">
+        <span class="tool-icon">▶️</span>
+        <div class="tool-info">
+          <div class="tool-name">Saved Site Se Media Lao</div>
+          <div class="tool-desc">Save ki hui site se naam bol ke fresh media lao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Naam</label>
+          <input type="text" id="pss_name" placeholder="jaise: mera_pasandida_site">
+        </div>
+        <div class="tool-field">
+          <label>Media Type</label>
+          <select id="pss_type">
+            <option value="all" selected>all</option>
+            <option value="image">image</option>
+            <option value="video">video</option>
+          </select>
+        </div>
+        <div class="tool-field">
+          <label>Limit</label>
+          <input type="number" id="pss_limit" placeholder="" value="10">
+        </div>
+        <button class="run-btn" onclick="runTool('play_saved_site', {name: document.getElementById('pss_name').value, media_type: document.getElementById('pss_type').value, limit: (parseInt(document.getElementById('pss_limit').value)||10)}, 'card_play_saved_site', true)">
+          ▶️ Media Lao
+        </button>
+        <div class="tool-result" id="res_card_play_saved_site" style="display:none"></div>
+        <div class="result-media-grid" id="media_card_play_saved_site"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_list_saved_sites">
+      <div class="tool-card-header" onclick="toggleCard('card_list_saved_sites')">
+        <span class="tool-icon">📋</span>
+        <div class="tool-info">
+          <div class="tool-name">Saved Sites List</div>
+          <div class="tool-desc">Saari naam-se-saved sites dikhao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('list_saved_sites', {}, 'card_list_saved_sites', false)">
+          📋 List Dekho
+        </button>
+        <div class="tool-result" id="res_card_list_saved_sites" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_delete_saved_site">
+      <div class="tool-card-header" onclick="toggleCard('card_delete_saved_site')">
+        <span class="tool-icon">🗑️</span>
+        <div class="tool-info">
+          <div class="tool-name">Saved Site Hatao</div>
+          <div class="tool-desc">Kisi saved site ko naam se hatao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Naam</label>
+          <input type="text" id="dss_name" placeholder="jaise: mera_pasandida_site">
+        </div>
+        <button class="run-btn" onclick="runTool('delete_saved_site', {name: document.getElementById('dss_name').value}, 'card_delete_saved_site', false)">
+          🗑️ Hatao
+        </button>
+        <div class="tool-result" id="res_card_delete_saved_site" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_watch_page">
+      <div class="tool-card-header" onclick="toggleCard('card_watch_page')">
+        <span class="tool-icon">👁️</span>
+        <div class="tool-info">
+          <div class="tool-name">Page Watch Karo</div>
+          <div class="tool-desc">Site update/keyword aane par notification bhejta hai</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>URL</label>
+          <input type="url" id="wp_url" placeholder="https://...">
+        </div>
+        <div class="tool-field">
+          <label>Keyword (optional)</label>
+          <input type="text" id="wp_kw" placeholder="jaise: back in stock">
+        </div>
+        <div class="tool-field">
+          <label>Naam (optional)</label>
+          <input type="text" id="wp_name" placeholder="jaise: ticket_watch">
+        </div>
+        <button class="run-btn" onclick="runTool('watch_page', {url: document.getElementById('wp_url').value, keyword: document.getElementById('wp_kw').value, name: document.getElementById('wp_name').value}, 'card_watch_page', false)">
+          👁️ Watch Shuru Karo
+        </button>
+        <div class="tool-result" id="res_card_watch_page" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_list_page_watches">
+      <div class="tool-card-header" onclick="toggleCard('card_list_page_watches')">
+        <span class="tool-icon">📋</span>
+        <div class="tool-info">
+          <div class="tool-name">Active Watches</div>
+          <div class="tool-desc">Saare active page-watches dikhao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('list_page_watches', {}, 'card_list_page_watches', false)">
+          📋 List Dekho
+        </button>
+        <div class="tool-result" id="res_card_list_page_watches" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_stop_watch">
+      <div class="tool-card-header" onclick="toggleCard('card_stop_watch')">
+        <span class="tool-icon">⏹️</span>
+        <div class="tool-info">
+          <div class="tool-name">Watch Band Karo</div>
+          <div class="tool-desc">Kisi active watch ko naam se cancel karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Naam</label>
+          <input type="text" id="sw_name" placeholder="jaise: ticket_watch">
+        </div>
+        <button class="run-btn" onclick="runTool('stop_watch', {name: document.getElementById('sw_name').value}, 'card_stop_watch', false)">
+          ⏹️ Band Karo
+        </button>
+        <div class="tool-result" id="res_card_stop_watch" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== MEMORY & KEYS EXTRAS ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🧠 Memory & Keys Extras <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_forget">
+      <div class="tool-card-header" onclick="toggleCard('card_forget')">
+        <span class="tool-icon">🗑️</span>
+        <div class="tool-info">
+          <div class="tool-name">Memory Bhoolo</div>
+          <div class="tool-desc">Koi saved memory delete karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Key</label>
+          <input type="text" id="fg_key" placeholder="jaise: mera_naam">
+        </div>
+        <button class="run-btn" onclick="runTool('forget', {key: document.getElementById('fg_key').value}, 'card_forget', false)">
+          🗑️ Bhoolo
+        </button>
+        <div class="tool-result" id="res_card_forget" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_save_api_key">
+      <div class="tool-card-header" onclick="toggleCard('card_save_api_key')">
+        <span class="tool-icon">🔐</span>
+        <div class="tool-info">
+          <div class="tool-name">API Key Save Karo</div>
+          <div class="tool-desc">Koi API key memory mein save karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Key Naam</label>
+          <input type="text" id="sak_name" placeholder="jaise: groq">
+        </div>
+        <div class="tool-field">
+          <label>Value</label>
+          <input type="text" id="sak_val" placeholder="Actual API key">
+        </div>
+        <button class="run-btn" onclick="runTool('save_api_key', {name: document.getElementById('sak_name').value, value: document.getElementById('sak_val').value}, 'card_save_api_key', false)">
+          🔐 Save Karo
+        </button>
+        <div class="tool-result" id="res_card_save_api_key" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_delete_api_key">
+      <div class="tool-card-header" onclick="toggleCard('card_delete_api_key')">
+        <span class="tool-icon">🗑️</span>
+        <div class="tool-info">
+          <div class="tool-name">API Key Delete Karo</div>
+          <div class="tool-desc">Saved API key hatao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Key Naam</label>
+          <input type="text" id="dak_name" placeholder="jaise: groq">
+        </div>
+        <button class="run-btn" onclick="runTool('delete_api_key', {name: document.getElementById('dak_name').value}, 'card_delete_api_key', false)">
+          🗑️ Delete Karo
+        </button>
+        <div class="tool-result" id="res_card_delete_api_key" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== UTILITY ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🧮 Utility <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_ask_wolfram">
+      <div class="tool-card-header" onclick="toggleCard('card_ask_wolfram')">
+        <span class="tool-icon">🧮</span>
+        <div class="tool-info">
+          <div class="tool-name">WolframAlpha</div>
+          <div class="tool-desc">Maths/science calculations WolframAlpha se</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Sawaal</label>
+          <input type="text" id="wa_q" placeholder="jaise: integral of x^2">
+        </div>
+        <button class="run-btn" onclick="runTool('ask_wolfram', {question: document.getElementById('wa_q').value}, 'card_ask_wolfram', false)">
+          🧮 Pucho
+        </button>
+        <div class="tool-result" id="res_card_ask_wolfram" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_diagnose_errors">
+      <div class="tool-card-header" onclick="toggleCard('card_diagnose_errors')">
+        <span class="tool-icon">🩺</span>
+        <div class="tool-info">
+          <div class="tool-name">Errors Diagnose Karo</div>
+          <div class="tool-desc">Recent errors ko saadi bhasha mein samjho</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Kitni recent errors</label>
+          <input type="number" id="de_limit" placeholder="" value="5">
+        </div>
+        <button class="run-btn" onclick="runTool('diagnose_errors', {limit: (parseInt(document.getElementById('de_limit').value)||5)}, 'card_diagnose_errors', false)">
+          🩺 Diagnose Karo
+        </button>
+        <div class="tool-result" id="res_card_diagnose_errors" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== NASA EXTRAS ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🛰️ NASA Extras <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_get_nasa_iss_location">
+      <div class="tool-card-header" onclick="toggleCard('card_get_nasa_iss_location')">
+        <span class="tool-icon">🛰️</span>
+        <div class="tool-info">
+          <div class="tool-name">ISS Location</div>
+          <div class="tool-desc">International Space Station ki real-time location</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('get_nasa_iss_location', {}, 'card_get_nasa_iss_location', false)">
+          🛰️ Location Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_nasa_iss_location" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_nasa_asteroids">
+      <div class="tool-card-header" onclick="toggleCard('card_get_nasa_asteroids')">
+        <span class="tool-icon">☄️</span>
+        <div class="tool-info">
+          <div class="tool-name">Aaj Ke Asteroids</div>
+          <div class="tool-desc">Aaj Earth ke paas se guzarne wale asteroids</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('get_nasa_asteroids', {}, 'card_get_nasa_asteroids', false)">
+          ☄️ Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_nasa_asteroids" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== TODO EXTRAS ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    ✅ Todo Extras <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_complete_todo">
+      <div class="tool-card-header" onclick="toggleCard('card_complete_todo')">
+        <span class="tool-icon">✅</span>
+        <div class="tool-info">
+          <div class="tool-name">Todo Complete Karo</div>
+          <div class="tool-desc">Kisi todo ko ID se complete mark karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Task ID</label>
+          <input type="number" id="ct_id" placeholder="jaise: 1">
+        </div>
+        <button class="run-btn" onclick="runTool('complete_todo', {task_id: (parseInt(document.getElementById('ct_id').value)||0)}, 'card_complete_todo', false)">
+          ✅ Complete Karo
+        </button>
+        <div class="tool-result" id="res_card_complete_todo" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_delete_todo">
+      <div class="tool-card-header" onclick="toggleCard('card_delete_todo')">
+        <span class="tool-icon">🗑️</span>
+        <div class="tool-info">
+          <div class="tool-name">Todo Delete Karo</div>
+          <div class="tool-desc">Kisi todo ko ID se permanently delete karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Task ID</label>
+          <input type="number" id="dt_id" placeholder="jaise: 1">
+        </div>
+        <button class="run-btn" onclick="runTool('delete_todo', {task_id: (parseInt(document.getElementById('dt_id').value)||0)}, 'card_delete_todo', false)">
+          🗑️ Delete Karo
+        </button>
+        <div class="tool-result" id="res_card_delete_todo" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== STREAMING CONTROLS ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    📡 Streaming Controls <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_play_stream">
+      <div class="tool-card-header" onclick="toggleCard('card_play_stream')">
+        <span class="tool-icon">▶️</span>
+        <div class="tool-info">
+          <div class="tool-name">Stream Chalao</div>
+          <div class="tool-desc">Koi bhi video/stream link chat ke andar play karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>URL</label>
+          <input type="url" id="ps_url" placeholder=".m3u8, YouTube, .mp4, ya koi bhi site link">
+        </div>
+        <div class="tool-field">
+          <label>Title (optional)</label>
+          <input type="text" id="ps_title" placeholder="">
+        </div>
+        <div class="tool-field">
+          <label>Quality</label>
+          <select id="ps_q">
+            <option value="auto" selected>auto</option>
+            <option value="144p">144p</option>
+            <option value="240p">240p</option>
+            <option value="360p">360p</option>
+            <option value="480p">480p</option>
+            <option value="720p">720p</option>
+            <option value="1080p">1080p</option>
+            <option value="4k">4k</option>
+          </select>
+        </div>
+        <button class="run-btn" onclick="runTool('play_stream', {url: document.getElementById('ps_url').value, title: document.getElementById('ps_title').value, quality: document.getElementById('ps_q').value}, 'card_play_stream', false)">
+          ▶️ Play Karo
+        </button>
+        <div class="tool-result" id="res_card_play_stream" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_pause_stream">
+      <div class="tool-card-header" onclick="toggleCard('card_pause_stream')">
+        <span class="tool-icon">⏸️</span>
+        <div class="tool-info">
+          <div class="tool-name">Pause Karo</div>
+          <div class="tool-desc">Chal rahi stream ko pause karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('pause_stream', {}, 'card_pause_stream', false)">
+          ⏸️ Pause
+        </button>
+        <div class="tool-result" id="res_card_pause_stream" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_resume_stream">
+      <div class="tool-card-header" onclick="toggleCard('card_resume_stream')">
+        <span class="tool-icon">▶️</span>
+        <div class="tool-info">
+          <div class="tool-name">Resume Karo</div>
+          <div class="tool-desc">Pause ki hui stream resume karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('resume_stream', {}, 'card_resume_stream', false)">
+          ▶️ Resume
+        </button>
+        <div class="tool-result" id="res_card_resume_stream" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_stop_stream">
+      <div class="tool-card-header" onclick="toggleCard('card_stop_stream')">
+        <span class="tool-icon">⏹️</span>
+        <div class="tool-info">
+          <div class="tool-name">Stream Band Karo</div>
+          <div class="tool-desc">Chal rahi stream band karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('stop_stream', {}, 'card_stop_stream', false)">
+          ⏹️ Band Karo
+        </button>
+        <div class="tool-result" id="res_card_stop_stream" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_stop_all_streams">
+      <div class="tool-card-header" onclick="toggleCard('card_stop_all_streams')">
+        <span class="tool-icon">⏹️</span>
+        <div class="tool-info">
+          <div class="tool-name">Saari Streams Band Karo</div>
+          <div class="tool-desc">Ek saath saari chal rahi streams band karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('stop_all_streams', {}, 'card_stop_all_streams', false)">
+          ⏹️ Sab Band Karo
+        </button>
+        <div class="tool-result" id="res_card_stop_all_streams" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_stream_status">
+      <div class="tool-card-header" onclick="toggleCard('card_stream_status')">
+        <span class="tool-icon">ℹ️</span>
+        <div class="tool-info">
+          <div class="tool-name">Stream Status</div>
+          <div class="tool-desc">Abhi koi stream chal rahi hai ya nahi</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('stream_status', {}, 'card_stream_status', false)">
+          ℹ️ Status Dekho
+        </button>
+        <div class="tool-result" id="res_card_stream_status" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_save_stream">
+      <div class="tool-card-header" onclick="toggleCard('card_save_stream')">
+        <span class="tool-icon">💾</span>
+        <div class="tool-info">
+          <div class="tool-name">Stream Save Karo</div>
+          <div class="tool-desc">Ek stream URL ko naam ke saath yaad rakho</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Naam</label>
+          <input type="text" id="sv_name" placeholder="jaise: mera_channel">
+        </div>
+        <div class="tool-field">
+          <label>URL</label>
+          <input type="url" id="sv_url" placeholder=".m3u8 ya koi video link">
+        </div>
+        <button class="run-btn" onclick="runTool('save_stream', {name: document.getElementById('sv_name').value, url: document.getElementById('sv_url').value}, 'card_save_stream', false)">
+          💾 Save Karo
+        </button>
+        <div class="tool-result" id="res_card_save_stream" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_play_saved_stream">
+      <div class="tool-card-header" onclick="toggleCard('card_play_saved_stream')">
+        <span class="tool-icon">▶️</span>
+        <div class="tool-info">
+          <div class="tool-name">Saved Stream Chalao</div>
+          <div class="tool-desc">Naam se saved stream chat mein play karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Naam</label>
+          <input type="text" id="pss2_name" placeholder="jaise: mera_channel">
+        </div>
+        <button class="run-btn" onclick="runTool('play_saved_stream', {name: document.getElementById('pss2_name').value}, 'card_play_saved_stream', false)">
+          ▶️ Play Karo
+        </button>
+        <div class="tool-result" id="res_card_play_saved_stream" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_list_saved_streams">
+      <div class="tool-card-header" onclick="toggleCard('card_list_saved_streams')">
+        <span class="tool-icon">📋</span>
+        <div class="tool-info">
+          <div class="tool-name">Saved Streams List</div>
+          <div class="tool-desc">Saare naam-se-saved streams dikhao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('list_saved_streams', {}, 'card_list_saved_streams', false)">
+          📋 List Dekho
+        </button>
+        <div class="tool-result" id="res_card_list_saved_streams" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_delete_saved_stream">
+      <div class="tool-card-header" onclick="toggleCard('card_delete_saved_stream')">
+        <span class="tool-icon">🗑️</span>
+        <div class="tool-info">
+          <div class="tool-name">Saved Stream Hatao</div>
+          <div class="tool-desc">Kisi saved stream ko naam se hatao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Naam</label>
+          <input type="text" id="dsv_name" placeholder="jaise: mera_channel">
+        </div>
+        <button class="run-btn" onclick="runTool('delete_saved_stream', {name: document.getElementById('dsv_name').value}, 'card_delete_saved_stream', false)">
+          🗑️ Hatao
+        </button>
+        <div class="tool-result" id="res_card_delete_saved_stream" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_set_default_stream_quality">
+      <div class="tool-card-header" onclick="toggleCard('card_set_default_stream_quality')">
+        <span class="tool-icon">⚙️</span>
+        <div class="tool-info">
+          <div class="tool-name">Default Quality Set Karo</div>
+          <div class="tool-desc">Har future stream is quality mein try hogi</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Quality</label>
+          <select id="sdq_q">
+            <option value="auto" selected>auto</option>
+            <option value="low">low</option>
+            <option value="144p">144p</option>
+            <option value="240p">240p</option>
+            <option value="360p">360p</option>
+            <option value="480p">480p</option>
+            <option value="720p">720p</option>
+            <option value="1080p">1080p</option>
+            <option value="4k">4k</option>
+            <option value="high">high</option>
+          </select>
+        </div>
+        <button class="run-btn" onclick="runTool('set_default_stream_quality', {quality: document.getElementById('sdq_q').value}, 'card_set_default_stream_quality', false)">
+          ⚙️ Set Karo
+        </button>
+        <div class="tool-result" id="res_card_set_default_stream_quality" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_default_stream_quality">
+      <div class="tool-card-header" onclick="toggleCard('card_get_default_stream_quality')">
+        <span class="tool-icon">⚙️</span>
+        <div class="tool-info">
+          <div class="tool-name">Default Quality Dekho</div>
+          <div class="tool-desc">Abhi default quality kya set hai</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('get_default_stream_quality', {}, 'card_get_default_stream_quality', false)">
+          ⚙️ Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_default_stream_quality" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_list_stream_qualities">
+      <div class="tool-card-header" onclick="toggleCard('card_list_stream_qualities')">
+        <span class="tool-icon">📶</span>
+        <div class="tool-info">
+          <div class="tool-name">Available Qualities</div>
+          <div class="tool-desc">Diye gaye .m3u8 URL mein konsi qualities available hain</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>m3u8 URL</label>
+          <input type="url" id="lsq_url" placeholder="https://...m3u8">
+        </div>
+        <button class="run-btn" onclick="runTool('list_stream_qualities', {url: document.getElementById('lsq_url').value}, 'card_list_stream_qualities', false)">
+          📶 Qualities Dekho
+        </button>
+        <div class="tool-result" id="res_card_list_stream_qualities" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== PERSONA / ROLEPLAY ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🎭 Persona / Roleplay <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_activate_persona">
+      <div class="tool-card-header" onclick="toggleCard('card_activate_persona')">
+        <span class="tool-icon">🎭</span>
+        <div class="tool-info">
+          <div class="tool-name">Persona Activate Karo</div>
+          <div class="tool-desc">Jarvis ko diye gaye character mein dhaal do</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Character Naam</label>
+          <input type="text" id="ap_name" placeholder="jaise: Pirate Captain">
+        </div>
+        <div class="tool-field">
+          <label>Description</label>
+          <textarea id="ap_desc" rows="3" placeholder="Character ka background, personality, mood"></textarea>
+        </div>
+        <div class="tool-field">
+          <label>Speaking Style (optional)</label>
+          <input type="text" id="ap_style" placeholder="">
+        </div>
+        <div class="tool-field">
+          <label>Voice Gender (optional)</label>
+          <select id="ap_voice">
+            <option value="" selected></option>
+            <option value="male">male</option>
+            <option value="female">female</option>
+          </select>
+        </div>
+        <button class="run-btn" onclick="runTool('activate_persona', {character_name: document.getElementById('ap_name').value, description: document.getElementById('ap_desc').value, speaking_style: document.getElementById('ap_style').value, voice_gender: document.getElementById('ap_voice').value}, 'card_activate_persona', false)">
+          🎭 Activate Karo
+        </button>
+        <div class="tool-result" id="res_card_activate_persona" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_deactivate_persona">
+      <div class="tool-card-header" onclick="toggleCard('card_deactivate_persona')">
+        <span class="tool-icon">🔄</span>
+        <div class="tool-info">
+          <div class="tool-name">Normal Mode</div>
+          <div class="tool-desc">Wapas normal Jarvis mode mein aao</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('deactivate_persona', {}, 'card_deactivate_persona', false)">
+          🔄 Normal Karo
+        </button>
+        <div class="tool-result" id="res_card_deactivate_persona" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_get_current_persona">
+      <div class="tool-card-header" onclick="toggleCard('card_get_current_persona')">
+        <span class="tool-icon">ℹ️</span>
+        <div class="tool-info">
+          <div class="tool-name">Active Persona</div>
+          <div class="tool-desc">Abhi konsa persona active hai</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('get_current_persona', {}, 'card_get_current_persona', false)">
+          ℹ️ Dekho
+        </button>
+        <div class="tool-result" id="res_card_get_current_persona" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_list_saved_personas">
+      <div class="tool-card-header" onclick="toggleCard('card_list_saved_personas')">
+        <span class="tool-icon">📋</span>
+        <div class="tool-info">
+          <div class="tool-name">Saved Personas</div>
+          <div class="tool-desc">Pehle bana chuke saare personas</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('list_saved_personas', {}, 'card_list_saved_personas', false)">
+          📋 List Dekho
+        </button>
+        <div class="tool-result" id="res_card_list_saved_personas" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_switch_to_saved_persona">
+      <div class="tool-card-header" onclick="toggleCard('card_switch_to_saved_persona')">
+        <span class="tool-icon">🔀</span>
+        <div class="tool-info">
+          <div class="tool-name">Saved Persona Par Switch Karo</div>
+          <div class="tool-desc">Pehle se saved persona par naam se switch karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Character Naam</label>
+          <input type="text" id="stsp_name" placeholder="jaise: Pirate Captain">
+        </div>
+        <button class="run-btn" onclick="runTool('switch_to_saved_persona', {character_name: document.getElementById('stsp_name').value}, 'card_switch_to_saved_persona', false)">
+          🔀 Switch Karo
+        </button>
+        <div class="tool-result" id="res_card_switch_to_saved_persona" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== SELF-EVOLUTION (ADVANCED ⚠️) ======== -->
+<div class="tool-category">
+  <div class="category-header" onclick="toggleCat(this)">
+    🧬 Self-Evolution (Advanced ⚠️) <span class="arrow">›</span>
+  </div>
+  <div class="category-body">
+
+    <div class="tool-card" id="card_scan_codebase">
+      <div class="tool-card-header" onclick="toggleCard('card_scan_codebase')">
+        <span class="tool-icon">📁</span>
+        <div class="tool-info">
+          <div class="tool-name">Codebase Scan Karo</div>
+          <div class="tool-desc">Poore Jarvis project folder ko scan karo</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('scan_codebase', {}, 'card_scan_codebase', false)">
+          📁 Scan Karo
+        </button>
+        <div class="tool-result" id="res_card_scan_codebase" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_read_code_file">
+      <div class="tool-card-header" onclick="toggleCard('card_read_code_file')">
+        <span class="tool-icon">📄</span>
+        <div class="tool-info">
+          <div class="tool-name">Code File Padho</div>
+          <div class="tool-desc">Apni hi koi project file ka content padho</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>File Path</label>
+          <input type="text" id="rcf_path" placeholder="jaise: tools.py">
+        </div>
+        <button class="run-btn" onclick="runTool('read_code_file', {file_path: document.getElementById('rcf_path').value}, 'card_read_code_file', false)">
+          📄 Padho
+        </button>
+        <div class="tool-result" id="res_card_read_code_file" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_write_code_file">
+      <div class="tool-card-header" onclick="toggleCard('card_write_code_file')">
+        <span class="tool-icon">✏️</span>
+        <div class="tool-info">
+          <div class="tool-name">⚠️ Code File Likho</div>
+          <div class="tool-desc">Apni hi koi project file overwrite karo — SAAVDHAN!</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>File Path</label>
+          <input type="text" id="wcf_path" placeholder="jaise: tools.py">
+        </div>
+        <div class="tool-field">
+          <label>Naya Content</label>
+          <textarea id="wcf_content" rows="3" placeholder="Poori file ka naya content"></textarea>
+        </div>
+        <button class="run-btn" onclick="runTool('write_code_file', {file_path: document.getElementById('wcf_path').value, new_content: document.getElementById('wcf_content').value}, 'card_write_code_file', false)">
+          ✏️ Likho
+        </button>
+        <div class="tool-result" id="res_card_write_code_file" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_write_multiple_files">
+      <div class="tool-card-header" onclick="toggleCard('card_write_multiple_files')">
+        <span class="tool-icon">✏️</span>
+        <div class="tool-info">
+          <div class="tool-name">⚠️ Multiple Files Likho</div>
+          <div class="tool-desc">Ek saath multiple project files update karo — SAAVDHAN!</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Files JSON</label>
+          <textarea id="wmf_json" rows="3" placeholder="jaise: [{&quot;path&quot;:&quot;tools.py&quot;,&quot;content&quot;:&quot;...&quot;}]"></textarea>
+        </div>
+        <button class="run-btn" onclick="runTool('write_multiple_files', {files_json: document.getElementById('wmf_json').value}, 'card_write_multiple_files', false)">
+          ✏️ Likho
+        </button>
+        <div class="tool-result" id="res_card_write_multiple_files" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_delete_code_file">
+      <div class="tool-card-header" onclick="toggleCard('card_delete_code_file')">
+        <span class="tool-icon">🗑️</span>
+        <div class="tool-info">
+          <div class="tool-name">⚠️ Code File Delete Karo</div>
+          <div class="tool-desc">Apni hi koi project file/tool delete karo — SAAVDHAN!</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>File Path</label>
+          <input type="text" id="dcf_path" placeholder="jaise: old_tool.py">
+        </div>
+        <button class="run-btn" onclick="runTool('delete_code_file', {file_path: document.getElementById('dcf_path').value}, 'card_delete_code_file', false)">
+          🗑️ Delete Karo
+        </button>
+        <div class="tool-result" id="res_card_delete_code_file" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_list_backups">
+      <div class="tool-card-header" onclick="toggleCard('card_list_backups')">
+        <span class="tool-icon">🗄️</span>
+        <div class="tool-info">
+          <div class="tool-name">Backups List</div>
+          <div class="tool-desc">Saare self-evolution backup snapshots</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <button class="run-btn" onclick="runTool('list_backups', {}, 'card_list_backups', false)">
+          🗄️ List Dekho
+        </button>
+        <div class="tool-result" id="res_card_list_backups" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_rollback">
+      <div class="tool-card-header" onclick="toggleCard('card_rollback')">
+        <span class="tool-icon">⏪</span>
+        <div class="tool-info">
+          <div class="tool-name">⚠️ Rollback Karo</div>
+          <div class="tool-desc">Code ko purane backup par restore karo — SAAVDHAN!</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Backup ID (khali = latest)</label>
+          <input type="text" id="rb_id" placeholder="optional">
+        </div>
+        <button class="run-btn" onclick="runTool('rollback', {backup_id: document.getElementById('rb_id').value}, 'card_rollback', false)">
+          ⏪ Rollback Karo
+        </button>
+        <div class="tool-result" id="res_card_rollback" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="tool-card" id="card_check_termux_compatibility">
+      <div class="tool-card-header" onclick="toggleCard('card_check_termux_compatibility')">
+        <span class="tool-icon">✅</span>
+        <div class="tool-info">
+          <div class="tool-name">Termux Compatibility Check</div>
+          <div class="tool-desc">Koi Python library Termux/Android par chalegi ya nahi</div>
+        </div>
+        <span class="tool-expand">›</span>
+      </div>
+      <div class="tool-body">
+        <div class="tool-field">
+          <label>Library Naam</label>
+          <input type="text" id="ctc_lib" placeholder="jaise: selenium">
+        </div>
+        <button class="run-btn" onclick="runTool('check_termux_compatibility', {library_name: document.getElementById('ctc_lib').value}, 'card_check_termux_compatibility', false)">
+          ✅ Check Karo
+        </button>
+        <div class="tool-result" id="res_card_check_termux_compatibility" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /tools-body -->
+
+<!-- Inline Radio Player (simple) -->
+<audio id="toolsRadioAudio" preload="none" style="display:none"></audio>
+
+<a href="/" class="back-btn">💬 Chat par wapas</a>
+
+<script>
+// ─── UI Helpers ───────────────────────────────────────────
+function toggleCat(el) {
+  el.classList.toggle('open');
+  const body = el.nextElementSibling;
+  if (!body) return;
+  body.classList.toggle('open');
+  body.style.display = body.classList.contains('open') ? 'block' : 'none';
+}
+function toggleCard(id) {
+  const card = document.getElementById(id);
+  if (!card) return;
+  card.classList.toggle('open');
+  // Card body show/hide
+  const body = card.querySelector('.tool-body');
+  if (body) body.style.display = card.classList.contains('open') ? 'block' : 'none';
+}
+
+// ─── Generic Tool Runner ──────────────────────────────────
+async function runTool(toolName, args, cardId, hasMedia) {
+  const resId = 'res_' + cardId;
+  const mediaId = 'media_' + cardId;
+  const resEl = document.getElementById(resId);
+  const mediaEl = document.getElementById(mediaId);
+
+  if (!resEl) {
+    alert('UI error: result div "' + resId + '" nahi mila. Page reload karo.');
+    return;
+  }
+
+  // Card open karo agar band hai
+  const card = document.getElementById(cardId);
+  if (card && !card.classList.contains('open')) card.classList.add('open');
+
+  resEl.style.display = 'block';
+  resEl.className = 'tool-result loading';
+  resEl.textContent = '⏳ ' + toolName + ' chal raha hai...';
+  if (mediaEl) mediaEl.innerHTML = '';
+
+  try {
+    const res = await fetch('/api/tools/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tool: toolName, args })
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      resEl.className = 'tool-result error';
+      resEl.textContent = '❌ Server error ' + res.status + ': ' + txt.slice(0, 300);
+      return;
+    }
+
+    const data = await res.json();
+
+    if (data.error) {
+      resEl.className = 'tool-result error';
+      resEl.textContent = '❌ Tool error: ' + data.error;
+      return;
+    }
+
+    const result = data.result || '';
+    resEl.className = 'tool-result success';
+
+    if (!hasMedia) {
+      resEl.textContent = result;
+      return;
+    }
+
+    // Media parse karo
+    renderMediaResult(result, resEl, mediaEl, cardId);
+
+  } catch (err) {
+    resEl.className = 'tool-result error';
+    resEl.textContent = '❌ Network error: ' + err.message + ' — Server chal raha hai? (python server.py)';
+  }
+}
+
+// ─── Media Renderer ──────────────────────────────────────
+function renderMediaResult(result, resEl, mediaEl, cardId) {
+  let text = result;
+  const images = [];
+  const videos = [];
+  const radios = [];
+
+  // IMAGE_FOUND extract
+  text = text.replace(/IMAGE_FOUND:\s*(\S+)/g, (m, url) => {
+    images.push(url.replace(/[`*_]/g, ''));
+    return '';
+  });
+
+  // IMAGE_GENERATED extract
+  text = text.replace(/IMAGE_GENERATED:\s*(\S+)/g, (m, path) => {
+    images.push(path);
+    return '';
+  });
+
+  // VIDEO_FOUND extract
+  text = text.replace(/VIDEO_FOUND:\s*(\S+?)\|([^\n]*)/g, (m, url, title) => {
+    videos.push({ url: url.replace(/[`*_]/g, ''), title: title.trim() });
+    return '';
+  });
+
+  // RADIO_STREAM extract
+  text = text.replace(/RADIO_STREAM:([^|\n]+)\|([^\n]+)/g, (m, url, name) => {
+    radios.push({ url: url.trim(), name: name.trim() });
+    return '';
+  });
+
+  resEl.textContent = text.trim() || (images.length + videos.length + radios.length > 0 ? '' : result);
+
+  if (!mediaEl) return;
+  mediaEl.innerHTML = '';
+
+  // Images
+  if (images.length) {
+    images.forEach(src => {
+      const img = document.createElement('img');
+      img.className = 'result-img';
+      const isLocal = src.startsWith('/static/');
+      img.src = isLocal ? src : '/api/imgproxy?url=' + encodeURIComponent(src);
+      img.onerror = () => { img.src = src; };
+      img.style.cursor = 'pointer';
+      img.onclick = () => window.open(isLocal ? src : src, '_blank');
+      mediaEl.appendChild(img);
+    });
+  }
+
+  // Videos
+  if (videos.length) {
+    videos.forEach(v => {
+      const ytId = getYouTubeId(v.url);
+      if (ytId) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'width:100%;margin-top:8px;border-radius:12px;overflow:hidden;border:1px solid #1e1e2e;background:#000;';
+
+        if (v.title) {
+          const t = document.createElement('div');
+          t.style.cssText = 'background:#111;color:#fff;font-size:11px;padding:6px 10px;';
+          t.textContent = '▶ ' + v.title;
+          wrap.appendChild(t);
+        }
+
+        const loading = document.createElement('div');
+        loading.style.cssText = 'background:#0a0a0a;color:#666;font-size:11px;padding:12px;text-align:center;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;';
+        loading.textContent = '⏳ Video load ho rahi hai...';
+        wrap.appendChild(loading);
+
+        const vid = document.createElement('video');
+        vid.style.cssText = 'width:100%;aspect-ratio:16/9;display:none;background:#000;';
+        vid.controls = true;
+        vid.playsInline = true;
+        wrap.appendChild(vid);
+
+        const ifr = document.createElement('iframe');
+        ifr.style.cssText = 'width:100%;aspect-ratio:16/9;border:none;display:none;';
+        ifr.allow = 'autoplay; fullscreen';
+        ifr.allowFullscreen = true;
+        wrap.appendChild(ifr);
+
+        // yt-dlp stream try karo
+        fetch('/api/ytstream?video_id=' + encodeURIComponent(ytId))
+          .then(r => r.json())
+          .then(d => {
+            if (d.url) {
+              loading.style.display = 'none';
+              vid.style.display = 'block';
+              vid.src = d.url;
+              vid.onerror = () => {
+                vid.style.display = 'none';
+                ifr.src = 'https://inv.tux.pizza/embed/' + ytId + '?autoplay=0';
+                ifr.style.display = 'block';
+              };
+            } else {
+              loading.style.display = 'none';
+              ifr.src = 'https://inv.tux.pizza/embed/' + ytId + '?autoplay=0';
+              ifr.style.display = 'block';
+            }
+          })
+          .catch(() => {
+            loading.style.display = 'none';
+            ifr.src = 'https://inv.tux.pizza/embed/' + ytId + '?autoplay=0';
+            ifr.style.display = 'block';
+          });
+
+        mediaEl.appendChild(wrap);
+      }
+    });
+  }
+
+  // Radio
+  if (radios.length) {
+    const radioAudio = document.getElementById('toolsRadioAudio');
+    radios.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'radio-play-card';
+      card.innerHTML = '<span style="font-size:24px">📻</span><div><div style="font-size:13px;font-weight:600;color:#63b3ed">' + r.name + '</div><div style="font-size:11px;color:#4a5568">Tap karo play karne ke liye</div></div>';
+      card.onclick = () => {
+        radioAudio.src = '/api/radiostream?url=' + encodeURIComponent(r.url);
+        radioAudio.play().catch(() => {});
+        card.querySelector('div div:last-child').textContent = '▶ Playing...';
+      };
+      mediaEl.appendChild(card);
+    });
+  }
+}
+
+function getYouTubeId(url) {
+  const patterns = [/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,/(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/];
+  for (const re of patterns) { const m = url.match(re); if (m) return m[1]; }
+  return null;
+}
+
+// ─── Image Search (special — selenium scroll) ─────────────
+async function runImageSearch() {
+  const query = document.getElementById('img_query').value.trim();
+  const count = parseInt(document.getElementById('img_count').value) || 4;
+  if (!query) { alert('Pehle query likho!'); return; }
+  await runTool('search_images', { query, count }, 'card_search_images', true);
+}
+
+// ─── Video Search ─────────────────────────────────────────
+async function runVideoSearch() {
+  const query = document.getElementById('vid_query').value.trim();
+  const count = parseInt(document.getElementById('vid_count').value) || 3;
+  if (!query) { alert('Pehle query likho!'); return; }
+  await runTool('search_videos', { query, count }, 'card_search_videos', true);
+}
+
+// ─── Auto-open first category ────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const firstCat = document.querySelector('.category-header');
+  if (firstCat) {
+    firstCat.classList.add('open');
+    if (firstCat.nextElementSibling) {
+      firstCat.nextElementSibling.classList.add('open');
+      firstCat.nextElementSibling.style.display = 'block';
+    }
+  }
+});
+</script>
+</body>
+</html>

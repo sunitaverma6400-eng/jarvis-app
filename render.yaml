@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: jarvis
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120 --graceful-timeout 30 --worker-tmp-dir /dev/shm --max-requests 200 --max-requests-jitter 40
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      # API keys yahan Render dashboard se add karo (values secret rehti hain):
+      - key: GROQ
+        sync: false
+      - key: GEMINI
+        sync: false
+      - key: OPENROUTER
+        sync: false
+      - key: PHONE_AGENT_TOKEN
+        sync: false

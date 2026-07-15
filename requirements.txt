@@ -1,0 +1,66 @@
+# ─── Core Server ───
+flask>=3.0.0
+requests>=2.31.0
+gunicorn>=22.0.0
+
+# ─── Twilio Phone Call Assistant ───
+twilio>=9.0.0
+
+# ─── AI / LLM ───
+groq>=0.9.0
+
+# ─── Memory (TinyDB) ───
+tinydb>=4.8.0
+
+# ─── Background Jobs (APScheduler — Celery/Redis se simpler, zero extra setup) ───
+apscheduler>=3.10.0
+
+# ─── RAG (SQLite + TF-IDF — koi extra install nahi chahiye) ───
+# sqlite3 Python ke saath built-in aata hai, kuch install nahi karna
+
+# ─── Image Search ───
+icrawler>=0.6.6
+ddgs>=9.0.0
+
+# ─── Video / YouTube ───
+yt-dlp>=2024.1.0
+
+# ─── Voice (DONO zaroori hain) ───
+edge-tts>=6.1.9
+pydub>=0.25.1
+
+# ─── File Processing (read) ───
+PyPDF2>=3.0.0
+openpyxl>=3.1.0
+docx2txt>=0.8
+
+# ─── File Generation (download — PDF/DOCX banane ke liye) ───
+reportlab>=4.0.0
+python-docx>=1.1.0
+
+# ─── Anti-bot bypass (get_page_media/scrape_webpage ke liye) ───
+# cloudscraper: Cloudflare ke basic/JS-challenge ko khud solve karta hai
+# aur TLS/browser fingerprint asli Chrome jaisa deta hai — bina koi bhaari
+# headless-browser chalaye (jo Render free tier ke 512MB RAM par risky
+# hota). Perimeter X/Turnstile jaisi advanced behavioral-detection wali
+# enterprise anti-bot systems ko yeh bypass NAHI karta (unke liye asli
+# browser + mouse-movement simulation chahiye hota hai, jo yahan feasible
+# nahi hai) — lekin zyadatar basic-to-medium Cloudflare protection ke
+# liye kaafi effective hai.
+cloudscraper>=1.2.71
+
+# ─── Image generation (FLUX.1-schnell via Hugging Face Inference Providers) ───
+# huggingface_hub sirf ek lightweight HTTP client hai (koi torch/GPU nahi
+# chahiye — actual model kisi bhi provider (fal-ai/together/replicate) ke
+# server par chalta hai, hum sirf request bhejte hain). Free HF account se
+# ek chhota monthly credit milta hai — agar nahi bhi hai to Jarvis khud
+# Pollinations.ai (bina key) par fallback kar leta hai, kabhi rukta nahi.
+huggingface_hub>=0.27.0
+Pillow>=10.0.0   # already icrawler se transitively install hoti hai, yahan explicit rakha hai reliability ke liye
+
+# ─── HLS Stream Playback (optional — falls back to ffmpeg/ffplay binary if not installed) ───
+python-vlc>=3.0.0
+
+# ─── Optional (recommend kiya jaata hai) ───
+# pip install beautifulsoup4  (web scraping better hoga)
+# pip install docx2txt         (Word docs ke liye)

@@ -1,0 +1,25 @@
+{
+  "name": "Jarvis",
+  "short_name": "Jarvis",
+  "description": "Personal Hindi AI assistant",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0d12",
+  "theme_color": "#0a0d12",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
